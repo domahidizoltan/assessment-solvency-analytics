@@ -13,28 +13,44 @@ var (
 )
 
 func findFirstOccurance(haystack, needle []int) ([]int, error) {
-	if err := validate(haystack, needle); err != nil {
+	results, err := findAllOccurances(haystack, needle)
+	if err != nil {
 		return nil, err
 	}
 
-	var needleIdx int
-	results := make([]int, 0, len(needle))
-	for i, h := range haystack {
-		if contains(h, needle[needleIdx]) {
-			results = append(results, i)
-			needleIdx++
-		}
+	return results[0], nil
 
-		if needleIdx >= len(needle) {
-			break
-		}
-	}
-
-	return results, nil
 }
 
 func findFirstOccuranceWithMaxDistanceLimit(haystack, needle []int, maximumDistance int) ([]int, error) {
 	return nil, nil
+}
+
+func findAllOccurances(haystack, needle []int) ([][]int, error) {
+	if err := validate(haystack, needle); err != nil {
+		return nil, err
+	}
+
+	results := [][]int{}
+	for j := 0; j < len(haystack)-len(needle)+1; j++ {
+		var needleIdx int
+		result := make([]int, 0, len(needle))
+		for i := j; i < len(haystack); i++ {
+			h := haystack[i]
+			if contains(h, needle[needleIdx]) {
+				result = append(result, i)
+				needleIdx++
+			}
+
+			if needleIdx >= len(needle) {
+				results = append(results, result)
+				j = result[0]
+				break
+			}
+		}
+	}
+
+	return results, nil
 }
 
 func validate(haystack, needle []int) error {
