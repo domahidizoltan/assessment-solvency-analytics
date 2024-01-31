@@ -18,28 +18,43 @@ const (
 
 func TestValidateSimple(t *testing.T) {
 	for _, s := range []struct {
-		name          string
-		expectedError error
+		name, fixtureFile, fixtureString string
+		expectedError                    error
 	}{
 		{
-			name: "valid1",
+			name:        "valid1",
+			fixtureFile: fixture_0_0_valid1,
 		},
 		{
-			name: "valid2_optional_field_is_missing",
+			name:        "valid2_optional_field_is_missing",
+			fixtureFile: fixture_0_1_valid2_optional_field_is_missing,
 		},
 		{
 			name:          "invalid_document_key1_is_missing",
+			fixtureFile:   fixture_0_2_invalid_document_key1_is_missing,
 			expectedError: ErrMissingRequiredKey,
 		},
 		{
 			name:          "invalid_document_key3_is_unexpected",
+			fixtureFile:   fixture_0_3_invalid_document_key3_is_unexpected,
 			expectedError: ErrUnexpectedKey,
 		},
+		{
+			name:          "envelope_unmarshal_error",
+			fixtureString: "{",
+			expectedError: ErrUnmarshalEnvelope,
+		},
 	} {
-		fixture, err := os.ReadFile(fixture_0_0_valid1)
-		require.NoError(t, err)
+		var fixture []byte
+		if len(s.fixtureString) > 0 {
+			fixture = []byte(s.fixtureString)
+		} else {
+			var err error
+			fixture, err = os.ReadFile(s.fixtureFile)
+			require.NoError(t, err)
+		}
 
-		actualErr := Validate(string(fixture))
+		actualErr := Validate(fixture)
 		assert.ErrorIs(t, actualErr, s.expectedError)
 	}
 
