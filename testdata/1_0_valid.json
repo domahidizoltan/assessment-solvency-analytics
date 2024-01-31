@@ -1,0 +1,21 @@
+{
+    "schema": {
+        "key1": {
+            "type": "string",
+            "required": true
+        },
+        "key2": {
+            "type": "boolean",
+            "required": true
+        },
+        "key3": {
+            "type": "integer",
+            "required": true
+        }
+    },
+    "document": {
+        "key1": "value1",
+        "key2": true,
+        "key3": 1
+    }
+}

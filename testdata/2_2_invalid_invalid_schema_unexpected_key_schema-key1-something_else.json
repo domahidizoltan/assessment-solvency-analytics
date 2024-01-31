@@ -1,0 +1,10 @@
+{
+    "schema": {
+        "key1": {
+            "type": "string",
+            "required": false,
+            "something_else": null
+        }
+    },
+    "document": {}
+}

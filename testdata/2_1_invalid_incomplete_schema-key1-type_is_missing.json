@@ -1,0 +1,8 @@
+{
+    "schema": {
+        "key1": {
+            "required": false
+        }
+    },
+    "document": {}
+}

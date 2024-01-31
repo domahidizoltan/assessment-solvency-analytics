@@ -1,0 +1,13 @@
+{
+    "schema": {
+        "key1": {
+            "required": true
+        },
+        "key2": {
+            "required": false
+        }
+    },
+    "document": {
+        "key1": 1
+    }
+}
