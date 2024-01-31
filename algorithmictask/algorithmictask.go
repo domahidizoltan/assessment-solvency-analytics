@@ -33,6 +33,10 @@ func findFirstOccurance(haystack, needle []int) ([]int, error) {
 	return results, nil
 }
 
+func findFirstOccuranceWithMaxDistanceLimit(haystack, needle []int, maximumDistance int) ([]int, error) {
+	return nil, nil
+}
+
 func validate(haystack, needle []int) error {
 	if len(haystack) == 0 {
 		return errHaystackEmpty

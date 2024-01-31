@@ -52,3 +52,28 @@ func TestFindFirstOccurance(t *testing.T) {
 		})
 	}
 }
+
+func TestFindFirstOccuranceWithMaxDistanceLimit(t *testing.T) {
+	for _, s := range []struct {
+		name                       string
+		haystack, needle, expected []int
+		maximumDistance            int
+		expectedError              error
+	}{
+		{
+			name:            "test_1",
+			haystack:        []int{662, 154063, 38, 1, 946773, 7877907760054, 332, 76826670, 7653639346039, 90593, 2567954972664},
+			needle:          []int{6, 5, 4},
+			maximumDistance: 3,
+			expected:        []int{7, 8, 10},
+		},
+	} {
+		t.Run(s.name, func(t *testing.T) {
+			actual, actualError := findFirstOccuranceWithMaxDistanceLimit(s.haystack, s.needle, s.maximumDistance)
+			assert.Equal(t, s.expected, actual)
+			if s.expected != nil {
+				assert.ErrorIs(t, s.expectedError, actualError)
+			}
+		})
+	}
+}
