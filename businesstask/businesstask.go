@@ -10,6 +10,8 @@ var (
 	ErrMissingRequiredKey = errors.New("required key is missing")
 	ErrUnexpectedKey      = errors.New("unexpected key")
 	ErrUnmarshalEnvelope  = errors.New("failed to unmarshal envelope")
+	ErrUnexpectedType     = errors.New("unexpected type")
+	ErrInvalidType        = errors.New("invalid type")
 )
 
 type (
