@@ -28,6 +28,7 @@ const (
 func TestValidate(t *testing.T) {
 	for _, s := range []struct {
 		name, fixtureFile, fixtureString string
+		forceTypeValidation              bool
 		expectedError                    error
 	}{
 		{
@@ -54,13 +55,15 @@ func TestValidate(t *testing.T) {
 			expectedError: ErrUnmarshalEnvelope,
 		},
 		{
-			name:        "valid_types",
-			fixtureFile: fixture_1_0_valid,
+			name:                "valid_types",
+			fixtureFile:         fixture_1_0_valid,
+			forceTypeValidation: true,
 		},
 		{
-			name:          "invalid_document_key1_is_not_a_string",
-			fixtureFile:   fixture_1_1_invalid_document_key1_is_not_a_string,
-			expectedError: ErrUnexpectedType,
+			name:                "invalid_document_key1_is_not_a_string",
+			fixtureFile:         fixture_1_1_invalid_document_key1_is_not_a_string,
+			forceTypeValidation: true,
+			expectedError:       ErrUnexpectedType,
 		},
 		{
 			name: "invalid_type",
@@ -73,22 +76,26 @@ func TestValidate(t *testing.T) {
 				},
 				"document": {}
 			}`,
-			expectedError: ErrInvalidType,
+			forceTypeValidation: true,
+			expectedError:       ErrInvalidType,
 		},
 		{
-			name:          "invalid_unexpected_key_something_else",
-			fixtureFile:   fixture_2_0_invalid_unexpected_key_something_else,
-			expectedError: ErrUnexpectedEnvelopeKey,
+			name:                "invalid_unexpected_key_something_else",
+			fixtureFile:         fixture_2_0_invalid_unexpected_key_something_else,
+			forceTypeValidation: true,
+			expectedError:       ErrUnexpectedEnvelopeKey,
 		},
 		{
-			name:          "invalid_incomplete_schema_key1_type_is_missing",
-			fixtureFile:   fixture_2_1_invalid_incomplete_schema_key1_type_is_missing,
-			expectedError: ErrMissingType,
+			name:                "invalid_incomplete_schema_key1_type_is_missing",
+			fixtureFile:         fixture_2_1_invalid_incomplete_schema_key1_type_is_missing,
+			forceTypeValidation: true,
+			expectedError:       ErrMissingType,
 		},
 		{
-			name:          "invalid_invalid_schema_unexpected_key_schema_key1_something_else",
-			fixtureFile:   fixture_2_2_invalid_invalid_schema_unexpected_key_schema__key1_something_else,
-			expectedError: ErrUnexpectedSchemaProperty,
+			name:                "invalid_invalid_schema_unexpected_key_schema_key1_something_else",
+			fixtureFile:         fixture_2_2_invalid_invalid_schema_unexpected_key_schema__key1_something_else,
+			forceTypeValidation: true,
+			expectedError:       ErrUnexpectedSchemaProperty,
 		},
 	} {
 		var fixture []byte
@@ -100,7 +107,7 @@ func TestValidate(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		actualErr := Validate(fixture)
+		actualErr := Validate(fixture, s.forceTypeValidation)
 		assert.ErrorIs(t, actualErr, s.expectedError)
 	}
 

@@ -44,7 +44,7 @@ type (
 	}
 )
 
-func Validate(input []byte) error {
+func Validate(input []byte, forceTypeValidation bool) error {
 	var envelope Envelope
 	if err := json.Unmarshal(input, &envelope); err != nil {
 		return wrapErr(ErrUnmarshalEnvelope, err.Error())
@@ -57,7 +57,7 @@ func Validate(input []byte) error {
 			}
 		}
 
-		if !isValidType(properties.Type) {
+		if !isValidType(properties.Type, forceTypeValidation) {
 			return wrapErr(ErrInvalidType, properties.Type)
 		}
 	}
@@ -70,7 +70,7 @@ func Validate(input []byte) error {
 			properties = props
 		}
 
-		if !isExpectedFieldType(properties.Type, val) {
+		if !isExpectedFieldType(properties.Type, val, forceTypeValidation) {
 			return wrapErr(ErrUnexpectedType, fmt.Sprintf("key=%s type=%s", key, properties.Type))
 		}
 	}
@@ -81,8 +81,8 @@ func wrapErr(err error, detail string) error {
 	return fmt.Errorf("%w: %s", err, detail)
 }
 
-func isValidType(t string) bool {
-	if len(t) == 0 {
+func isValidType(t string, forceValidation bool) bool {
+	if !forceValidation || len(t) == 0 {
 		return true
 	}
 
@@ -90,8 +90,8 @@ func isValidType(t string) bool {
 	return ok
 }
 
-func isExpectedFieldType(expectedType string, val any) bool {
-	if len(expectedType) == 0 {
+func isExpectedFieldType(expectedType string, val any, forceValidation bool) bool {
+	if !forceValidation && len(expectedType) == 0 {
 		return true
 	}
 
