@@ -47,7 +47,8 @@ func findFirstOccuranceWithMaxDistanceLimit(haystack, needle []int, maxDistance 
 	}
 
 	for _, res := range results {
-		if res[len(needle)-1]-res[0] <= maxDistance {
+		distance := res[len(needle)-1] - res[0]
+		if distance <= maxDistance {
 			return res, nil
 		}
 	}
@@ -56,7 +57,26 @@ func findFirstOccuranceWithMaxDistanceLimit(haystack, needle []int, maxDistance 
 }
 
 func findFirstOccuranceWithMinimumPossibleDistance(haystack, needle []int) ([]int, error) {
-	return nil, nil
+	results, err := findAllOccurances(haystack, needle)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(results) < 1 {
+		return []int{}, nil
+	}
+
+	minDistance := len(haystack)
+	var minDistanceIdx int
+	for i, res := range results {
+		distance := res[len(needle)-1] - res[0]
+		if distance < minDistance {
+			minDistance = distance
+			minDistanceIdx = i
+		}
+	}
+
+	return results[minDistanceIdx], nil
 }
 
 var findAllOccurances = func(haystack, needle []int) ([][]int, error) {
