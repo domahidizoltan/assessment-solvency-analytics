@@ -4,6 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
+)
+
+type Type string
+
+const (
+	TypeString Type = "string"
+	TypeInt    Type = "integer"
+	TypeBool   Type = "boolean"
 )
 
 var (
@@ -12,11 +21,18 @@ var (
 	ErrUnmarshalEnvelope  = errors.New("failed to unmarshal envelope")
 	ErrUnexpectedType     = errors.New("unexpected type")
 	ErrInvalidType        = errors.New("invalid type")
+
+	validTypes = map[Type]struct{}{
+		TypeString: {},
+		TypeInt:    {},
+		TypeBool:   {},
+	}
 )
 
 type (
 	SchemaProperties struct {
-		Required bool `json:"required"`
+		Type     string `json:"type,omitempty"`
+		Required bool   `json:"required,omitempty"`
 	}
 
 	Envelope struct {
@@ -37,11 +53,22 @@ func Validate(input []byte) error {
 				return wrapErr(ErrMissingRequiredKey, key)
 			}
 		}
+
+		if !isValidType(properties.Type) {
+			return wrapErr(ErrInvalidType, properties.Type)
+		}
 	}
 
-	for key := range envelope.Document {
-		if _, ok := envelope.Schema[key]; !ok {
+	for key, val := range envelope.Document {
+		var properties SchemaProperties
+		if props, ok := envelope.Schema[key]; !ok {
 			return wrapErr(ErrUnexpectedKey, key)
+		} else {
+			properties = props
+		}
+
+		if !isExpectedFieldType(properties.Type, val) {
+			return wrapErr(ErrUnexpectedType, fmt.Sprintf("key=%s type=%s", key, properties.Type))
 		}
 	}
 	return nil
@@ -49,4 +76,31 @@ func Validate(input []byte) error {
 
 func wrapErr(err error, detail string) error {
 	return fmt.Errorf("%w: %s", err, detail)
+}
+
+func isValidType(t string) bool {
+	if len(t) == 0 {
+		return true
+	}
+
+	_, ok := validTypes[Type(t)]
+	return ok
+}
+
+func isExpectedFieldType(expectedType string, val any) bool {
+	if len(expectedType) == 0 {
+		return true
+	}
+
+	switch reflect.TypeOf(val).Name() {
+	case "string":
+		return expectedType == string(TypeString)
+	case "bool":
+		return expectedType == string(TypeBool)
+	case "float64", "float32", "int", "int64", "int32", "uint", "uint8", "uint16", "uint32", "uint64":
+		return expectedType == string(TypeInt)
+	default:
+		return false
+	}
+
 }

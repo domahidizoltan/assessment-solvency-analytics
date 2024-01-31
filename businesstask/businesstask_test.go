@@ -63,8 +63,8 @@ func TestValidate(t *testing.T) {
 			{
 				"schema": {
 					"key1": {
-						"type": "array",
-					},
+						"type": "array"
+					}
 				},
 				"document": {}
 			}`,
