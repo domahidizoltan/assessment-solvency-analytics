@@ -47,7 +47,7 @@ func TestValidate(t *testing.T) {
 		{
 			name:          "invalid_document_key3_is_unexpected",
 			fixtureFile:   fixture_0_3_invalid_document_key3_is_unexpected,
-			expectedError: ErrUnexpectedKey,
+			expectedError: ErrUnexpectedField,
 		},
 		{
 			name:          "envelope_unmarshal_error",
@@ -83,7 +83,7 @@ func TestValidate(t *testing.T) {
 			name:                "invalid_unexpected_key_something_else",
 			fixtureFile:         fixture_2_0_invalid_unexpected_key_something_else,
 			forceTypeValidation: true,
-			expectedError:       ErrUnexpectedEnvelopeKey,
+			expectedError:       ErrUnexpectedKey,
 		},
 		{
 			name:                "invalid_incomplete_schema_key1_type_is_missing",
@@ -95,20 +95,26 @@ func TestValidate(t *testing.T) {
 			name:                "invalid_invalid_schema_unexpected_key_schema_key1_something_else",
 			fixtureFile:         fixture_2_2_invalid_invalid_schema_unexpected_key_schema__key1_something_else,
 			forceTypeValidation: true,
-			expectedError:       ErrUnexpectedSchemaProperty,
+			expectedError:       ErrUnexpectedKey,
 		},
 	} {
-		var fixture []byte
-		if len(s.fixtureString) > 0 {
-			fixture = []byte(s.fixtureString)
-		} else {
-			var err error
-			fixture, err = os.ReadFile(s.fixtureFile)
-			require.NoError(t, err)
-		}
+		t.Run(s.name, func(t *testing.T) {
+			var fixture []byte
+			if len(s.fixtureString) > 0 {
+				fixture = []byte(s.fixtureString)
+			} else {
+				var err error
+				fixture, err = os.ReadFile(s.fixtureFile)
+				require.NoError(t, err)
+			}
 
-		actualErr := Validate(fixture, s.forceTypeValidation)
-		assert.ErrorIs(t, actualErr, s.expectedError)
+			actualErr := Validate(fixture, s.forceTypeValidation)
+			assert.ErrorIs(t, actualErr, s.expectedError)
+		})
 	}
+}
 
+func TestUnhandledFieldType(t *testing.T) {
+	isExpected := isExpectedFieldType("array", []int{}, true)
+	assert.False(t, isExpected)
 }
