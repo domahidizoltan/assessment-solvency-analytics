@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var errFindAllOccurances = errors.New("findAllOccurances error")
+
 func TestFindAllOccurances(t *testing.T) {
 	for _, s := range []struct {
 		name             string
@@ -84,9 +86,9 @@ func TestFindFirstOccurance(t *testing.T) {
 		{
 			name: "receiving_error",
 			mockedReturn: func([]int, []int) ([][]int, error) {
-				return nil, errors.New("findAllOccurances error")
+				return nil, errFindAllOccurances
 			},
-			expectedError: errors.New("findAllOccurances error"),
+			expectedError: errFindAllOccurances,
 		},
 	} {
 		t.Run(s.name, func(t *testing.T) {
@@ -157,9 +159,9 @@ func TestFindFirstOccuranceWithMaxDistanceLimit(t *testing.T) {
 			needle:      []int{0},
 			maxDistance: 1,
 			mockedReturn: func([]int, []int) ([][]int, error) {
-				return nil, errors.New("findAllOccurances error")
+				return nil, errFindAllOccurances
 			},
-			expectedError: errors.New("findAllOccurances error"),
+			expectedError: errFindAllOccurances,
 		},
 	} {
 		t.Run(s.name, func(t *testing.T) {
@@ -172,6 +174,53 @@ func TestFindFirstOccuranceWithMaxDistanceLimit(t *testing.T) {
 			}
 
 			actual, actualError := findFirstOccuranceWithMaxDistanceLimit(s.haystack, s.needle, s.maxDistance)
+			assert.Equal(t, s.expected, actual)
+			if s.expected != nil {
+				assert.ErrorIs(t, s.expectedError, actualError)
+			}
+		})
+	}
+}
+
+func TestFindFirstOccuranceWithMinimumPossibleDistance(t *testing.T) {
+	for _, s := range []struct {
+		name                       string
+		haystack, needle, expected []int
+		expectedError              error
+		mockedReturn               func([]int, []int) ([][]int, error)
+	}{
+		{
+			name:     "test_1",
+			haystack: []int{662, 154063, 38, 1, 946773, 7877907760054, 332, 76826670, 7653639346039, 90593, 2567954972664},
+			needle:   []int{6, 5, 4},
+			expected: []int{8, 9, 10},
+		},
+		{
+			name:     "no_results",
+			haystack: []int{1},
+			needle:   []int{2},
+			expected: []int{},
+		},
+		{
+			name:     "receiving_error",
+			haystack: []int{0},
+			needle:   []int{0},
+			mockedReturn: func([]int, []int) ([][]int, error) {
+				return nil, errFindAllOccurances
+			},
+			expectedError: errFindAllOccurances,
+		},
+	} {
+		t.Run(s.name, func(t *testing.T) {
+			if s.mockedReturn != nil {
+				bkp := findAllOccurances
+				defer func() {
+					findAllOccurances = bkp
+				}()
+				findAllOccurances = s.mockedReturn
+			}
+
+			actual, actualError := findFirstOccuranceWithMinimumPossibleDistance(s.haystack, s.needle)
 			assert.Equal(t, s.expected, actual)
 			if s.expected != nil {
 				assert.ErrorIs(t, s.expectedError, actualError)

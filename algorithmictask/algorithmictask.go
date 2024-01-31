@@ -55,6 +55,10 @@ func findFirstOccuranceWithMaxDistanceLimit(haystack, needle []int, maxDistance 
 	return []int{}, nil
 }
 
+func findFirstOccuranceWithMinimumPossibleDistance(haystack, needle []int) ([]int, error) {
+	return nil, nil
+}
+
 var findAllOccurances = func(haystack, needle []int) ([][]int, error) {
 	if err := validate(haystack, needle); err != nil {
 		return nil, err
