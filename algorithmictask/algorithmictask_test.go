@@ -10,6 +10,7 @@ func TestFindFirstOccurance(t *testing.T) {
 	for _, s := range []struct {
 		name                       string
 		haystack, needle, expected []int
+		expectedError              error
 	}{
 		{
 			name:     "test_1",
@@ -23,10 +24,31 @@ func TestFindFirstOccurance(t *testing.T) {
 			needle:   []int{3, 5},
 			expected: []int{1, 2},
 		},
+		{
+			name:          "haystack_is_empty",
+			haystack:      nil,
+			needle:        []int{0},
+			expectedError: errHaystackEmpty,
+		},
+		{
+			name:          "needle_is_empty",
+			haystack:      []int{0},
+			needle:        nil,
+			expectedError: errNeedleEmpty,
+		},
+		{
+			name:          "haystack_is_shorter",
+			haystack:      []int{123},
+			needle:        []int{1, 2},
+			expectedError: errHaystackShorter,
+		},
 	} {
 		t.Run(s.name, func(t *testing.T) {
-			actual := findFirstOccurance(s.haystack, s.needle)
+			actual, actualError := findFirstOccurance(s.haystack, s.needle)
 			assert.Equal(t, s.expected, actual)
+			if s.expected != nil {
+				assert.ErrorIs(t, s.expectedError, actualError)
+			}
 		})
 	}
 }
