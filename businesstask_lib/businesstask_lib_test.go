@@ -1,11 +1,15 @@
-package businesstask
+package businesstask_lib
 
 import (
+	"errors"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xeipuuv/gojsonreference"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 const (
@@ -29,7 +33,7 @@ func TestValidate(t *testing.T) {
 	for _, s := range []struct {
 		name, fixtureFile, fixtureString string
 		forceTypeValidation              bool
-		expectedError                    error
+		expectedError                    string
 	}{
 		{
 			name:        "valid1",
@@ -42,17 +46,17 @@ func TestValidate(t *testing.T) {
 		{
 			name:          "invalid_document_key1_is_missing",
 			fixtureFile:   fixture_0_2_invalid_document_key1_is_missing,
-			expectedError: ErrMissingRequiredKey,
+			expectedError: "key1 is required",
 		},
 		{
 			name:          "invalid_document_key3_is_unexpected",
 			fixtureFile:   fixture_0_3_invalid_document_key3_is_unexpected,
-			expectedError: ErrUnexpectedField,
+			expectedError: "Additional property key3 is not allowed",
 		},
 		{
 			name:          "envelope_unmarshal_error",
 			fixtureString: "{",
-			expectedError: ErrUnmarshalEnvelope,
+			expectedError: ErrUnmarshalEnvelope.Error(),
 		},
 		{
 			name:                "valid_types",
@@ -63,7 +67,7 @@ func TestValidate(t *testing.T) {
 			name:                "invalid_document_key1_is_not_a_string",
 			fixtureFile:         fixture_1_1_invalid_document_key1_is_not_a_string,
 			forceTypeValidation: true,
-			expectedError:       ErrUnexpectedType,
+			expectedError:       "Invalid type. Expected: string, given: integer",
 		},
 		{
 			name: "invalid_type",
@@ -79,28 +83,75 @@ func TestValidate(t *testing.T) {
 				}
 			}`,
 			forceTypeValidation: true,
-			expectedError:       ErrInvalidType,
+			expectedError:       ErrInvalidType.Error(),
 		},
 		{
 			name:                "invalid_unexpected_key_something_else",
 			fixtureFile:         fixture_2_0_invalid_unexpected_key_something_else,
 			forceTypeValidation: true,
-			expectedError:       ErrUnexpectedKey,
+			expectedError:       ErrUnexpectedKey.Error(),
 		},
 		{
 			name:                "invalid_incomplete_schema_key1_type_is_missing",
 			fixtureFile:         fixture_2_1_invalid_incomplete_schema_key1_type_is_missing,
 			forceTypeValidation: true,
-			expectedError:       ErrMissingType,
+			expectedError:       ErrMissingType.Error(),
 		},
 		{
 			name:                "invalid_invalid_schema_unexpected_key_schema_key1_something_else",
 			fixtureFile:         fixture_2_2_invalid_invalid_schema_unexpected_key_schema__key1_something_else,
 			forceTypeValidation: true,
-			expectedError:       ErrUnexpectedKey,
+			expectedError:       ErrUnexpectedKey.Error(),
+		},
+		{
+			name: "schema_loader_error",
+			fixtureString: `
+			{
+				"schema": {
+					"key1": {
+						"type": "str"
+					}
+				}
+			}`,
+			expectedError: "has a primitive type that is NOT VALID -- given: /str/ Expected valid values are:[array boolean integer number null object string]",
+		},
+		{
+			name: "document_loader_error",
+			fixtureString: `
+			{
+				"schema": {},
+				"document": "FAIL"
+			}`,
+			expectedError: "loader failed",
+		},
+		{
+			name: "type_validation_forced",
+			fixtureString: `
+			{
+				"schema": {
+					"key1": {
+						"type": ""
+					}
+				}
+			}`,
+			forceTypeValidation: true,
+			expectedError:       ErrMissingType.Error(),
 		},
 	} {
 		t.Run(s.name, func(t *testing.T) {
+			if s.name == "document_loader_error" {
+				bkp := newLoader
+				defer func() {
+					newLoader = bkp
+				}()
+				newLoader = func(source any) gojsonschema.JSONLoader {
+					if reflect.TypeOf(source).String() == "json.RawMessage" {
+						return fakeJSONLoader{}
+					}
+					return gojsonschema.NewGoLoader(source)
+				}
+			}
+
 			var fixture []byte
 			if len(s.fixtureString) > 0 {
 				fixture = []byte(s.fixtureString)
@@ -111,14 +162,13 @@ func TestValidate(t *testing.T) {
 			}
 
 			actualErr := Validate(fixture, s.forceTypeValidation)
-			assert.ErrorIs(t, actualErr, s.expectedError)
+			if len(s.expectedError) == 0 {
+				assert.NoError(t, actualErr)
+			} else {
+				assert.ErrorContains(t, actualErr, s.expectedError)
+			}
 		})
 	}
-}
-
-func TestUnhandledFieldType(t *testing.T) {
-	isExpected := isExpectedFieldType("array", []int{}, true)
-	assert.False(t, isExpected)
 }
 
 func BenchmarkValidate(b *testing.B) {
@@ -129,3 +179,14 @@ func BenchmarkValidate(b *testing.B) {
 		Validate(fixture, true)
 	}
 }
+
+type fakeJSONLoader struct{}
+
+func (fakeJSONLoader) JsonSource() interface{} { return nil }
+func (fakeJSONLoader) LoadJSON() (interface{}, error) {
+	return nil, errors.New("loader failed")
+}
+func (fakeJSONLoader) JsonReference() (gojsonreference.JsonReference, error) {
+	return gojsonreference.JsonReference{}, nil
+}
+func (fakeJSONLoader) LoaderFactory() gojsonschema.JSONLoaderFactory { return nil }

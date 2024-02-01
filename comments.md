@@ -5,8 +5,9 @@ Here I'd like to add some comments to my solution which might not be clear at th
 
 ## Algorithmic task
 
-- Validating the input was not a requirement but I implemented validations as well. They are covered with tests. Probably only the `haystack_is_shorter` scenario might not be clear what is intended to validate when the haystack size is smaller than the needle size. Without this validation in this case the output can't have the same size as the needle, what should always be the case.
-- The functions and the error types are not exported because I usually try narrow the access scope as much as possible 
+- Validating the input was not a requirement but I implemented validations as well. They are covered with tests. Probably only the `haystack_is_shorter` scenario might not be clear what is intended to validate when the haystack size is smaller than the needle size. Without this validation the output can't have the same size as the needle, what should always be the case.
+- The functions and the error types are not exported because I usually try to narrow the access scope as much as possible. 
+
 
 ## Business task
 
@@ -27,6 +28,10 @@ There are two more interesting parts:
 - The `Validate` function and the errors are exported because this is a scenario of creating a lib where it makes no sense to not export the main access points and the error types (to let the callers check them later)
 - "Optional business task 1" introduces the type check but the types could be optional in the first task to not break the existing test fixtures. "Optional business task 2" makes the type check mandatory what would break the previous test fixtures. Instead of changing the existing test fixtures I choosed to add the `forceTypeValidation` parameter to the validator. This makes the test drive the implementation details what is not a good practice but I think for a home assignment it could be acceptable in favor of keeping the test data intact.
 
+P.S.: I managed to make the validation by using `github.com/xeipuuv/gojsonschema` what is under the `businesstask_lib` package. Most of the tests are copied from the `businesstask` package with some minor change (mostly the errors). The only thing what I could not cover is restricting the types in the schema definition (to use only `integer`, `string` and `boolean`).  
+I also added benchmarks to both implementation and as I expected using the lib is slower. The benchmark on my machine resulted ~3.5x ns/op gain by using my custom implementation.  
+This change was done in one step (in the last commit named "*implement JSON validation by using 3rd party lib*") because I already had most of the tests and I was also experimenting with things so I avoided the "baby steps" approach.
+
 
 ## Usage
 
@@ -38,9 +43,34 @@ go test -cover ./...
 ❯ go test -cover ./...
 ok      solvencyanalytics/algorithmictask       (cached)        coverage: 100.0% of statements
 ok      solvencyanalytics/businesstask  (cached)        coverage: 100.0% of statements
+ok      solvencyanalytics/businesstask_lib      (cached)        coverage: 100.0% of statements
 ```
 
-- Running the tests by using Docker (build and run):
+- Running benchmarks:
+```bash
+go test -bench=. -benchtime=1s ./...
+```
+```bash
+❯ go test -bench=. -benchtime=1s ./...
+PASS
+ok      solvencyanalytics/algorithmictask       0.005s
+goos: linux
+goarch: amd64
+pkg: solvencyanalytics/businesstask
+cpu: Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz
+BenchmarkValidate-4       139280              8634 ns/op
+PASS
+ok      solvencyanalytics/businesstask  2.243s
+goos: linux
+goarch: amd64
+pkg: solvencyanalytics/businesstask_lib
+cpu: Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz
+BenchmarkValidate-4        36210             30815 ns/op
+PASS
+ok      solvencyanalytics/businesstask_lib      1.460s
+```
+
+- Running the tests and benchmark by using Docker (build and run):
 ```bash
 docker build -t homework-domahidizoltan .
 docker run --rm homework-domahidizoltan
