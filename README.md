@@ -1,12 +1,11 @@
-# Homework
+# Solvency Analytics Assignment
 
-The following two tasks are designed to give us a comprehensive image about your programming skills in different domains. We expect you to solve these tasks according to your current knowledge and experience. If you like the tasks or you want to further demonstate your involvement, we are happy to see the solution for the optional tasks.
+author: Zoltán Domahidi  
+date: February 1, 2024  
+
+<br/>
 
 You can use any programming language, but we prefer python3 and Go. In case you choose another programming language, you must provide a dockerized execution environment, and a detailed description of how to run your solution.
-
-Feel free to use the internet, but please do not seek any assistance from a third party. If you have difficulties interpreting the tasks, do not hesitate to contact us.
-
-If you find the solution for any of the tasks on the internet please provide us the source and the way you found it, we will give you extra credit for that.
 
 Our preferences:
 - 100% statement coverage
